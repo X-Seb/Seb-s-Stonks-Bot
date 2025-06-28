@@ -1,0 +1,1 @@
+This is a fun discord bot that let's you get detailed insights about stocks and also trade virtual stocks with your friends :)
