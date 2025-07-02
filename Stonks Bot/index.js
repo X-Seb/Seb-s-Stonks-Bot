@@ -34,10 +34,12 @@ client.on("messageCreate", async (message) => {
   let fullContent = message.content; // The user's message text
 
   const isMention = message.mentions.has(client.user.id);
-  const isReplyToMe = message.reference && 
-                      await message.channel.messages.fetch(message.reference.messageId)
-                        .then(repliedToMsg => repliedToMsg.author.id === client.user.id)
-                        .catch(() => false); // Handle cases where the replied-to message is deleted
+  const isReplyToMe =
+    message.reference &&
+    (await message.channel.messages
+      .fetch(message.reference.messageId)
+      .then((repliedToMsg) => repliedToMsg.author.id === client.user.id)
+      .catch(() => false)); // Handle cases where the replied-to message is deleted
 
   // --- NEW: Check for Mention or Reply-to-Bot ---
   if (isMention) {
@@ -63,6 +65,8 @@ client.on("messageCreate", async (message) => {
     guildId: message.guild.id,
     userId: message.author.id,
     userTag: message.author.tag,
+    userNickname: message.author.userNickname,
+    sessionId: `discord-guild-${message.guild.id}-channel-${message.channel.id}`,
   };
 
   console.log(
