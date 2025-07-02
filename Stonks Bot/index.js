@@ -8,7 +8,7 @@ const axios = require("axios");
 // --- STEP 2: GET YOUR SECRETS ---
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
-const COMMAND_PREFIX = "s!";
+// The COMMAND_PREFIX is no longer needed.
 
 // --- STEP 3: CREATE THE BOT CLIENT ---
 const client = new Client({
@@ -28,26 +28,35 @@ client.on("ready", () => {
 
 // This event runs for every message the bot can see
 client.on("messageCreate", async (message) => {
-  // (This is the full message handling logic from our previous conversations)
-  if (message.author.bot) return;
+  if (message.author.bot) return; // Always ignore bots
 
   let triggerType = null;
-  let fullContent = "";
+  let fullContent = message.content; // The user's message text
 
-  if (message.content.startsWith(COMMAND_PREFIX)) {
-    triggerType = "prefix";
-    fullContent = message.content.slice(COMMAND_PREFIX.length).trim();
-  } else if (message.mentions.has(client.user.id)) {
+  const isMention = message.mentions.has(client.user.id);
+  const isReplyToMe = message.reference && 
+                      await message.channel.messages.fetch(message.reference.messageId)
+                        .then(repliedToMsg => repliedToMsg.author.id === client.user.id)
+                        .catch(() => false); // Handle cases where the replied-to message is deleted
+
+  // --- NEW: Check for Mention or Reply-to-Bot ---
+  if (isMention) {
     triggerType = "mention";
-    fullContent = message.content.replace(/<@.?[0-9]*?>/g, "").trim();
+    // Clean the mention tag out of the content
+    fullContent = message.content.replace(/<@!?\d+>/g, "").trim();
+  } else if (isReplyToMe) {
+    triggerType = "reply";
+    // The content is already clean, no changes needed
   } else {
+    // If it's not a mention or a reply to our bot, ignore it.
     return;
   }
 
+  // If there's no text content after the trigger, do nothing
   if (!fullContent) return;
 
   const payload = {
-    triggerType: triggerType,
+    triggerType: triggerType, // Will be 'mention' or 'reply'
     rawContent: fullContent,
     messageId: message.id,
     channelId: message.channel.id,
